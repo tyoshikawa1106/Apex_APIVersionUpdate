@@ -7,10 +7,10 @@ ApexCodeのAPIバージョン一括更新機能です。
 - 名前検索は前方一致検索になります。
 - 更新対象はページとコンポーネントです。クラスとトリガーは更新できません。
   
-*画面イメージ*  
+### 画面イメージ  
 <img src="http://cdn-ak.f.st-hatena.com/images/fotolife/t/tyoshikawa1106/20131230/20131230223248.png" />  
   
-*カスタム設定登録イメージ*  
+### カスタム設定登録イメージ  
 <img src="http://cdn-ak.f.st-hatena.com/images/fotolife/t/tyoshikawa1106/20131230/20131230223249.png" />  
   
 > Package URL  
