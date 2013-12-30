@@ -1,0 +1,304 @@
+<apex:page controller="ApexCodeApiVersionUpdateController" title="{!$Label.ApiUpdate_Title}" showHeader="true" sidebar="false" tabStyle="ApexCodeApiVersionUpdate__tab" id="page">
+    <script type="text/javascript">
+        var __sfdcSessionId = '{!GETSESSIONID()}';
+        beenFocused = true;
+    </script>
+    <script src="../../soap/ajax/29.0/connection.js" type="text/javascript"></script>
+    <style type="text/css">
+        .searchText {width:250px;}
+        .checked {width:30px;}
+    </style>
+    <apex:sectionHeader Title="{!$Label.ApiUpdate_Application}" subtitle="{!$Label.ApiUpdate_Title}" />
+    <apex:form id="form">
+        <apex:actionFunction name="refreshSearch" action="{!doSearch}" reRender="form" />
+        <!-- Search Block -->
+        <apex:pageBlock id="searchBlock">
+            <apex:pageMessages id="msg"/>
+            <apex:pageBlockButtons location="bottom" id="serchBlockButtons">
+                <apex:commandButton value=" {!$Label.ApiUpdate_Search} " title=" {!$Label.ApiUpdate_Search} " action="{!doSearch}" reRender="form"/>
+                <apex:commandButton value=" {!$Label.ApiUpdate_Update_ApexPage} " title=" {!$Label.ApiUpdate_Update_ApexPage} "
+                    onClick="return updateApiVersion('{!$Component.page:form:pBlock:pSection:pBlockTable}', '{!wrappers.size}', '{!JSENCODE(updateApiVersion)}' , '{!JSENCODE(apexCodeType)}');"
+                        rendered="{!AND(wrappers.size > 0, apexCodeType == $Label.ApiUpdate_CodeType_Page)}" />
+                <apex:commandButton value=" {!$Label.ApiUpdate_Update_ApexComponent} " title=" {!$Label.ApiUpdate_Update_ApexComponent} "
+                    onClick="return updateApiVersion('{!$Component.page:form:cmptBlock:cmptSection:cmptBlockTable}', '{!wrappers.size}', '{!JSENCODE(updateApiVersion)}' , '{!JSENCODE(apexCodeType)}');"
+                        rendered="{!AND(wrappers.size > 0, apexCodeType == $Label.ApiUpdate_CodeType_Component)}" />
+                <apex:commandButton value=" {!$Label.ApiUpdate_Update_ApexClass} " title=" {!$Label.ApiUpdate_Update_ApexClass} "
+                    onClick="return updateApiVersion('{!$Component.page:form:cBlock:cSection:cBlockTable}', '{!wrappers.size}', '{!JSENCODE(updateApiVersion)}' , '{!JSENCODE(apexCodeType)}');"
+                        rendered="{!AND(wrappers.size > 0, apexCodeType == $Label.ApiUpdate_CodeType_Class)}" />
+                <apex:commandButton value=" {!$Label.ApiUpdate_Update_ApexTrigger} " title=" {!$Label.ApiUpdate_Update_ApexTrigger} "
+                    onClick="return updateApiVersion('{!$Component.page:form:tBlock:tSection:tBlockTable}', '{!wrappers.size}', '{!JSENCODE(updateApiVersion)}' , '{!JSENCODE(apexCodeType)}');"
+                        rendered="{!AND(wrappers.size > 0, apexCodeType == $Label.ApiUpdate_CodeType_Trigger)}" />
+            </apex:pageBlockButtons>
+            <apex:pageBlockSection columns="3" id="searchBlockSection">
+                <apex:pageBlockSection title="{!$Label.ApiUpdate_Section_CodeType}" collapsible="false" columns="1">
+                    <apex:selectRadio value="{!apexCodeType}" layout="pageDirection">
+                        <apex:selectOptions value="{!apexCodeTypeListItem}"/>
+                    </apex:selectRadio>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection title="{!$Label.ApiUpdate_Section_Search}" collapsible="false" columns="1">
+                    <apex:pageBlockSectionItem >
+                        <apex:outputLabel value="{!$ObjectType.ApexPage.Fields.ApiVersion.Label}" />
+                        <apex:outputPanel >
+                            <apex:selectList value="{!searchApiVersion}" size="1">
+                                <apex:selectOptions value="{!searchApiVersionListItem}" />
+                            </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                    <apex:pageBlockSectionItem >
+                        <apex:outputText value="{!$ObjectType.ApexPage.Fields.Name.Label}" />
+                        <apex:inputText value="{!searchName}" styleClass="searchText"/>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+                <apex:pageBlockSection title="{!$Label.ApiUpdate_Section_NewApiVersion}" collapsible="false" columns="1" id="newApiVersionSection">
+                    <apex:pageBlockSectionItem id="newApiVersionSectionItem">
+                        <apex:outputLabel value="{!$ObjectType.ApexPage.Fields.ApiVersion.Label}" />
+                        <apex:outputPanel >
+                           <apex:selectList value="{!updateApiVersion}" size="1">
+                               <apex:selectOptions value="{!updateApiVersionListItem}" />
+                               <apex:actionSupport event="onchange" reRender="searchBlock" /> 
+                           </apex:selectList>
+                        </apex:outputPanel>
+                    </apex:pageBlockSectionItem>
+                </apex:pageBlockSection>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <!-- Apex Page Block -->
+        <apex:pageBlock rendered="{!AND(wrappers.size > 0, apexCodeType == $Label.ApiUpdate_CodeType_Page)}" id="pBlock">
+            <apex:pageBlockSection title="{!$Label.ApiUpdate_Section_ApexPage}" collapsible="false" columns="1" id="pSection">
+                <apex:pageBlockTable value="{!wrappers}" var="item" id="pBlockTable">
+                    <apex:column styleClass="checked" id="pCheckedColumn">
+                        <apex:facet name="header">
+                            <apex:inputCheckBox value="{!isCheckedHeader}" onClick="changeCheckedHeader('{!$Component.page:form:pBlock:pSection:pBlockTable}', '{!wrappers.size}', '{!JSENCODE(apexCodeType)}');" id="pCheckHeader"/>
+                        </apex:facet>
+                        <apex:inputCheckBox value="{!item.isChecked}" onClick="changeCheckedColumn('{!$Component.page:form:pBlock:pSection}', '{!JSENCODE(apexCodeType)}');" id="pChecked"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexPage.Fields.Name.Label}" id="pNameColumn">
+                        <apex:outputLink value="/{!item.apexPage.Id}">
+                            <apex:outputField value="{!item.apexPage.Name}"/>
+                        </apex:outputLink>
+                        <apex:inputHidden value="{!item.apexPage.Id}" id="pId"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexPage.Fields.MasterLabel.Label}">
+                        <apex:outputField value="{!item.apexPage.MasterLabel}" id="pMasterLabel"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexPage.Fields.ApiVersion.Label}" id="pApiVersionColumn">
+                        <apex:outputField value="{!item.apexPage.ApiVersion}" id="pApiVersion"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexPage.Fields.Description.Label}" >
+                        <apex:outputField value="{!item.apexPage.Description}" />
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexPage.Fields.LastModifiedById.Label}">
+                        <apex:outputField value="{!item.apexPage.LastModifiedById}" />
+                        <apex:outputText value=" " />
+                        <apex:outputField value="{!item.apexPage.LastModifiedDate}" />
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <!-- Apex Component Block -->
+        <apex:pageBlock rendered="{!AND(wrappers.size > 0, apexCodeType == $Label.ApiUpdate_CodeType_Component)}" id="cmptBlock">
+            <apex:pageBlockSection title="{!$Label.ApiUpdate_Section_ApexComponent}" collapsible="false" columns="1" id="cmptSection">
+                <apex:pageBlockTable value="{!wrappers}" var="item" id="cmptBlockTable">
+                    <apex:column styleClass="checked" id="cmptCheckedColumn">
+                        <apex:facet name="header">
+                            <apex:inputCheckBox value="{!isCheckedHeader}" onClick="changeCheckedHeader('{!$Component.page:form:cmptBlock:cmptSection:cmptBlockTable}', '{!wrappers.size}', '{!JSENCODE(apexCodeType)}');" id="cmptCheckHeader"/>
+                        </apex:facet>
+                        <apex:inputCheckBox value="{!item.isChecked}" onClick="changeCheckedColumn('{!$Component.page:form:cmptBlock:cmptSection}', '{!JSENCODE(apexCodeType)}');" id="cmptChecked"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexComponent.Fields.Name.Label}" id="cmptNameColumn">
+                        <apex:outputLink value="/{!item.apexComponent.Id}">
+                            <apex:outputField value="{!item.apexComponent.Name}"/>
+                        </apex:outputLink>
+                        <apex:inputHidden value="{!item.apexComponent.Id}" id="cmptId"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexComponent.Fields.MasterLabel.Label}">
+                        <apex:outputField value="{!item.apexComponent.MasterLabel}"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexComponent.Fields.ApiVersion.Label}" id="cmptApiVersionColumn">
+                        <apex:outputField value="{!item.apexComponent.ApiVersion}" id="cmptApiVersion"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexComponent.Fields.Description.Label}">
+                        <apex:outputField value="{!item.apexComponent.Description}" id="cmptDescription"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexComponent.Fields.LastModifiedById.Label}">
+                        <apex:outputField value="{!item.apexComponent.LastModifiedById}"/>
+                        <apex:outputText value=" " />
+                        <apex:outputField value="{!item.apexComponent.LastModifiedDate}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <!-- Apex Class Block -->
+        <apex:pageBlock rendered="{!AND(wrappers.size > 0, apexCodeType == $Label.ApiUpdate_CodeType_Class)}" id="cBlock">
+            <apex:pageBlockSection title="{!$Label.ApiUpdate_Section_ApexClass}" collapsible="false" columns="1" id="cSection">
+                <apex:pageBlockTable value="{!wrappers}" var="item" id="cBlockTable">
+                    <apex:column styleClass="checked" id="cCheckedColumn">
+                        <apex:facet name="header">
+                            <apex:inputCheckBox value="{!isCheckedHeader}" onClick="changeCheckedHeader('{!$Component.page:form:cBlock:cSection:cBlockTable}', '{!wrappers.size}', '{!JSENCODE(apexCodeType)}');" id="cCheckHeader"/>
+                        </apex:facet>
+                        <apex:inputCheckBox value="{!item.isChecked}" onClick="changeCheckedColumn('{!$Component.page:form:cBlock:cSection}', '{!JSENCODE(apexCodeType)}');" id="cChecked"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexClass.Fields.Name.Label}" id="cNameColumn">
+                        <apex:outputLink value="/{!item.apexClass.Id}">
+                            <apex:outputField value="{!item.apexClass.Name}"/>
+                        </apex:outputLink>
+                        <apex:inputHidden value="{!item.apexClass.Id}" id="cId"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexClass.Fields.ApiVersion.Label}" id="cApiVersionColumn">
+                        <apex:outputField value="{!item.apexClass.ApiVersion}" id="cApiVersion"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexClass.Fields.LastModifiedById.Label}" >
+                        <apex:outputField value="{!item.apexClass.LastModifiedById}" />
+                        <apex:outputText value=" " />
+                        <apex:outputField value="{!item.apexClass.LastModifiedDate}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+        
+        <!-- Apex Trigger Block -->
+        <apex:pageBlock rendered="{!AND(wrappers.size > 0, apexCodeType == $Label.ApiUpdate_CodeType_Trigger)}" id="tBlock">
+            <apex:pageBlockSection title="{!$Label.ApiUpdate_Section_ApexTrigger}" collapsible="false" columns="1" id="tSection">
+                <apex:pageBlockTable value="{!wrappers}" var="item" id="tBlockTable">
+                    <apex:column styleClass="checked" id="tCheckedColumn">
+                        <apex:facet name="header">
+                            <apex:inputCheckBox value="{!isCheckedHeader}" onClick="changeCheckedHeader('{!$Component.page:form:tBlock:tSection:tBlockTable}', '{!wrappers.size}', '{!JSENCODE(apexCodeType)}');" id="tCheckHeader"/>
+                        </apex:facet>
+                        <apex:inputCheckBox value="{!item.isChecked}" onClick="changeCheckedColumn('{!$Component.page:form:tBlock:tSection}', '{!JSENCODE(apexCodeType)}');" id="tChecked"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexTrigger.Fields.Name.Label}" id="tNameColumn">
+                        <apex:outputLink value="/{!item.apexTrigger.Id}">
+                            <apex:outputField value="{!item.apexTrigger.Name}"/>
+                        </apex:outputLink>
+                        <apex:inputHidden value="{!item.apexTrigger.Id}" id="tId"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexTrigger.Fields.ApiVersion.Label}" id="tApiVersionColumn">
+                        <apex:outputField value="{!item.apexTrigger.ApiVersion}" id="tApiVersion"/>
+                    </apex:column>
+                    <apex:column headerValue="{!$ObjectType.ApexTrigger.Fields.LastModifiedById.Label}" >
+                        <apex:outputField value="{!item.apexTrigger.LastModifiedById}" />
+                        <apex:outputText value=" " />
+                        <apex:outputField value="{!item.apexTrigger.LastModifiedDate}"/>
+                    </apex:column>
+                </apex:pageBlockTable>
+            </apex:pageBlockSection>
+        </apex:pageBlock>
+    </apex:form>
+    <script type="text/javascript">
+        /**
+         * updateApiVersion
+         */
+        function updateApiVersion(blockTableId, listSize, updateApiVersion, codeType) {
+        
+            var updateRecords = [];
+            
+            var objectType = '';
+            var check = '';
+            var objectId = '';
+            
+            if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Page)}') {
+                objectType = 'ApexPage';
+                check = ':pChecked';
+                objectId = ':pId';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Component)}') {
+                objectType = 'ApexComponent';
+                check = ':cmptChecked';
+                objectId = ':cmptId';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Class)}') {
+                objectType = 'ApexClass';
+                check = ':cChecked';
+                objectId = ':cId';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Trigger)}') {
+                objectType = 'ApexTrigger';
+                check = ':tChecked';
+                objectId = ':tId';
+            }
+            
+            for (var i = 0; i < listSize; i++) {
+                
+                var columnChecked = document.getElementById(blockTableId + ':' + i + check);
+                if (columnChecked.checked) {
+                    
+                    var apex = new sforce.SObject(objectType);
+                    apex.Id = document.getElementById(blockTableId + ':' + i + objectId).value;
+                    apex.ApiVersion = updateApiVersion;
+                    
+                    updateRecords.push(apex);
+                }
+            }
+            
+            if (updateRecords.length == 0) {
+                alert('{!JSENCODE($Label.ApiUpdate_Not_Select)}');
+                return false;
+            }
+            
+            // Update
+            var results = sforce.connection.update(updateRecords);
+            
+            for(var i = 0; i < results.length; i++) {
+                if(!results[i].getBoolean('success')) {  
+                    alert('Error : ' + results[i].errors.message);
+                    return false; 
+                }
+            }
+            
+            alert('{!JSENCODE($Label.ApiUpdate_Completion)}');
+            refreshSearch();
+            return false;
+        }
+        
+        /**
+         * Checked HeaderCheckBox
+         */
+        function changeCheckedHeader(blockTableId, listSize, codeType) {
+        
+            var checkHeader = '';
+            var checked = '';
+            
+            if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Page)}') {
+                checkHeader = 'pCheckHeader';
+                checked = 'pChecked';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Component)}') {
+                checkHeader = 'cmptCheckHeader';
+                checked = 'cmptChecked';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Class)}') {
+                checkHeader = 'cCheckHeader';
+                checked = 'cChecked';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Trigger)}') {
+                checkHeader = 'tCheckHeader';
+                checked = 'tChecked';
+            }
+            
+            var hederElement = document.getElementById(blockTableId + ':' + checkHeader);
+            for (var i = 0; i < listSize; i++) {
+                var columnChecked = document.getElementById(blockTableId + ':' + i + ':' + checked);
+                columnChecked.checked = hederElement.checked;
+            }
+            return false;
+        }
+        
+        /**
+         * Checked ColumnCheckBox
+         */
+        function changeCheckedColumn(resultSectionId, codeType) {
+        
+            var checkHeader = '';
+            if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Page)}') {
+                checkHeader = ':pBlockTable:pCheckHeader';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Component)}') {
+                checkHeader = ':cmptBlockTable:cmptCheckHeader';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Class)}') {
+                checkHeader = ':cBlockTable:cCheckHeader';
+            } else if (codeType == '{!JSENCODE($Label.ApiUpdate_CodeType_Trigger)}') {
+                checkHeader = ':tBlockTable:tCheckHeader';
+            }
+            
+            var hederElement = document.getElementById(resultSectionId + checkHeader);
+            hederElement.checked = false;
+            return false;
+        }
+    </script>
+</apex:page>
